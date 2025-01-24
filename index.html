@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Alloy Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #171717;
+            color: white;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        input, select, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            background-color: #252525;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #333;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ffcc00;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+		.credits {
+			position: fixed;
+			bottom: 10px;
+			left: 50%;
+			transform: translateX(-50%);
+			color: white;
+			font-size: 14px;
+			font-family: Arial, sans-serif;
+			opacity: 0.7;
+		}
+    </style>
+</head>
+<body>
+    <h2>Metal Alloy Calculator</h2>
+
+    <label for="metal">Select Metal:</label>
+    <select id="metal">
+        <option value="tin_bronze">Tin Bronze</option>
+        <option value="bismuth_bronze">Bismuth Bronze</option>
+        <option value="black_bronze">Black Bronze</option>
+        <option value="brass">Brass</option>
+        <option value="cupronickel">Cupronickel</option>
+        <option value="electrum">Electrum</option>
+        <option value="molybdochalkos">Molybdochalkos</option>
+        <option value="lead_solder">Lead Solder</option>
+        <option value="silver_solder">Silver Solder</option>
+    </select>
+
+    <label for="goal">Goal (min 100 units):</label>
+    <input type="number" id="goal" min="100" step="5" value="100">
+
+    <button onclick="calculate()">Calculate</button>
+
+    <div id="result"></div>
+
+    <script>
+        const metalCompositions = {
+            tin_bronze: [
+                { name: "Tin", min: 8, max: 12 },
+                { name: "Copper", min: 88, max: 92 }
+            ],
+            black_bronze: [
+                { name: "Gold", min: 8, max: 16 },
+                { name: "Silver", min: 8, max: 16 },
+                { name: "Copper", min: 68, max: 84 }
+            ],
+            bismuth_bronze: [
+                { name: "Bismuth", min: 10, max: 20 },
+                { name: "Zinc", min: 20, max: 30 },
+                { name: "Copper", min: 50, max: 70 }
+            ],
+            cupronickel: [
+                { name: "Nickel", min: 25, max: 35 },
+                { name: "Copper", min: 65, max: 75 }
+            ],
+			electrum: [
+                { name: "Silver", min: 40, max: 60 },
+                { name: "Gold", min: 40, max: 60 }
+            ],
+            brass: [
+                { name: "Zinc", min: 30, max: 40 },
+                { name: "Copper", min: 60, max: 70 }
+            ],
+            lead_solder: [
+                { name: "Lead", min: 45, max: 55 },
+                { name: "Tin", min: 45, max: 55 }
+            ],
+            molybdochalkos: [
+                { name: "Lead", min: 88, max: 92 },
+                { name: "Copper", min: 8, max: 12 }
+            ],
+            silver_solder: [
+                { name: "Silver", min: 40, max: 50 },
+                { name: "Tin", min: 50, max: 60 }
+            ]
+        };
+
+        function calculate() {
+            const metal = document.getElementById("metal").value;
+            let goal = parseInt(document.getElementById("goal").value);
+
+            if (goal < 100) {
+                alert("Minimum goal is 100 units.");
+                return;
+            }
+
+            goal = Math.round(goal / 5) * 5;
+
+            const composition = metalCompositions[metal];
+            let resultHTML = "";
+
+            let totalBits = 0;
+
+            composition.forEach((element, index) => {
+                let minUnits = Math.round((element.min / 100) * goal / 5) * 5;
+                let maxUnits = Math.round((element.max / 100) * goal / 5) * 5;
+                let defaultUnits = Math.round(((element.min + element.max) / 2 / 100) * goal / 5) * 5;
+
+                totalBits += defaultUnits / 5;
+
+                resultHTML += `
+                    <div class="slider-container">
+                        <label>${element.name}: <span id="amount${index}">${defaultUnits}</span> Units (<span id="bits${index}">${defaultUnits / 5}</span> bits)</label>
+                        <input type="range" min="${minUnits}" max="${maxUnits}" step="5" value="${defaultUnits}" 
+                            oninput="updateValues(${index}, this.value, ${goal})">
+                    </div>
+                `;
+            });
+
+            resultHTML += `
+                <div class="total">
+                    Total: <span id="totalBits" style="color: #2aa16f">${totalBits}</span>/${goal / 5} bits
+                </div>
+            `;
+
+            document.getElementById("result").innerHTML = resultHTML;
+        }
+
+        function updateValues(index, value, goal) {
+            document.getElementById(`amount${index}`).textContent = value;
+            document.getElementById(`bits${index}`).textContent = value / 5;
+
+            // Recalculate total
+            let totalUnits = 0;
+            document.querySelectorAll(".slider-container input").forEach(input => {
+                totalUnits += parseInt(input.value);
+            });
+			
+			const totalBitsElement = document.getElementById("totalBits");
+            totalBitsElement.textContent = totalUnits / 5;
+			
+			if (totalUnits === goal) {
+				totalBitsElement.style.color = "#2aa16f"; 
+			} else {
+				totalBitsElement.style.color = "#ffcc00";
+			}
+        }
+    </script>
+	<div class="credits">Made by Sevie! (@sehvie)</div>
+</body>
+</html>
